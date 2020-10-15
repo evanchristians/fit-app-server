@@ -14,7 +14,7 @@ type CreateUserDto {
 }
 
 type Query {
-  user: String!
+  user(userId: String!): User!
   users: [User!]!
 }
 

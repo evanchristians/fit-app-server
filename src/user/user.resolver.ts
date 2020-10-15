@@ -4,23 +4,24 @@ import { UsersService } from "./user.service";
 import { UserInput } from "./inputs/user.input";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { Controller } from "@nestjs/common";
+import { identity } from "rxjs";
 
 @Controller()
 @Resolver()
 export class UsersResolver {
   constructor(private usersService: UsersService) {}
 
-  @Query(() => String)
-  async user() {
-    return "helloWorld";
+  @Query(() => User)
+  async user(@Args({ name: "userId", type: () => String }) userId: string) {
+    return await this.usersService.findOne(userId);
   }
 
-  @Query(returns => [User])
+  @Query(() => [User])
   async users() {
     return await this.usersService.findAll();
   }
 
-  @Mutation(returns => CreateUserDto)
+  @Mutation(() => CreateUserDto)
   async createUser(
     @Args({ name: "input", type: () => UserInput }) input: UserInput,
   ) {
