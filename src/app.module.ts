@@ -9,6 +9,10 @@ import { UsersModule } from "./user/user.module";
   imports: [
     GraphQLModule.forRoot({
       autoSchemaFile: "schema.gql",
+      installSubscriptionHandlers: true,
+      subscriptions: {
+        keepAlive: 5000
+      }
     }),
     TypeOrmModule.forRoot(),
     UsersModule,

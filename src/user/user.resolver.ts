@@ -1,15 +1,22 @@
-import { Query, Resolver, Mutation, Args } from "@nestjs/graphql";
+import { Controller } from "@nestjs/common";
+import { Args, Mutation, Query, Resolver, Subscription } from "@nestjs/graphql";
+import { PubSub } from "graphql-subscriptions";
+import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
+import { LoginInput, RegisterInput } from "./inputs/user.input";
 import { User } from "./user.entity";
 import { UsersService } from "./user.service";
-import { UserInput } from "./inputs/user.input";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { Controller } from "@nestjs/common";
-import { identity } from "rxjs";
+
+const pubSub = new PubSub();
 
 @Controller()
 @Resolver()
 export class UsersResolver {
   constructor(private usersService: UsersService) {}
+  @Subscription(() => User)
+  userAdded() {
+    pubSub.asyncIterator("userAdded");
+  }
 
   @Query(() => User)
   async user(@Args({ name: "userId", type: () => String }) userId: string) {
@@ -21,10 +28,22 @@ export class UsersResolver {
     return await this.usersService.findAll();
   }
 
-  @Mutation(() => CreateUserDto)
-  async createUser(
-    @Args({ name: "input", type: () => UserInput }) input: UserInput,
+  @Mutation(() => RegisterDto)
+  async register(
+    @Args({ name: "input", type: () => RegisterInput }) input: RegisterInput,
   ) {
-    return await this.usersService.create(input);
+    const user = await this.usersService.register(input);
+    const publish = await pubSub.publish("userAdded", {
+      userAdded: user,
+    });
+    console.log(publish);
+    return user;
+  }
+
+  @Mutation(() => LoginDto)
+  async login(
+    @Args({ name: "input", type: () => LoginInput }) input: LoginInput,
+  ) {
+    return await this.usersService.login(input);
   }
 }
